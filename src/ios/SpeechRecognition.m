@@ -16,6 +16,7 @@
 #define MESSAGE_NOT_DETERMINED @"Speech recognition not determined on this device"
 #define MESSAGE_ACCESS_DENIED_MICROPHONE @"User denied access to microphone"
 #define MESSAGE_ONGOING @"Ongoing speech recognition"
+#define MESSAGE_NO_CHANNELS @"No channels available"
 
 @interface SpeechRecognition()
 
@@ -142,6 +143,16 @@
                 self.recognitionTask = nil;
             }
         }];
+
+        AVAudioChannelCount channels = [[inputNode inputFormatForBus:0] channelCount];
+        NSLog(@"The number of channels is %d ", channels);
+
+        if (channels == 0) {
+          NSLog(@"startListening() error: no available channels");
+          CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:MESSAGE_NO_CHANNELS];
+          [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+          return;
+        }
 
         [inputNode installTapOnBus:0 bufferSize:1024 format:format block:^(AVAudioPCMBuffer *buffer, AVAudioTime *when) {
             [self.recognitionRequest appendAudioPCMBuffer:buffer];
